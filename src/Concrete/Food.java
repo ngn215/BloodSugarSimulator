@@ -1,6 +1,8 @@
 package Concrete;
 
-public class Food {
+import Interface.BPEffector;
+
+public class Food implements BPEffector{
 	
 	private int id;
 	private String name;
@@ -37,5 +39,15 @@ public class Food {
 		//return person instance
 		return new Food(idInteger, name, glycemicIndexInteger);
 	}
+
+	@Override
+	public int getEffectIndex() {
+		// TODO Auto-generated method stub
+		return glycemicIndex;
+	}
 	
+	public String toString()
+	{
+		return getName();
+	}
 }

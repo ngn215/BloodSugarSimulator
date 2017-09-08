@@ -54,6 +54,14 @@ public class FoodFactory {
 				String lineFromFile = scanner.nextLine();
 				String[] tokensFromLine = lineFromFile.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 				
+				if (tokensFromLine.length < 3)
+					throw new RuntimeException("Invalid food list file.");
+				
+				String foodName = tokensFromLine[1];
+				
+				if (foodsMap.containsKey(foodName))
+					throw new RuntimeException("Duplicate food item : " + foodName + " present in file.");
+				
 				Food food = createFoodInstance(tokensFromLine[0], tokensFromLine[1], tokensFromLine[2]);
 				
 				foodsMap.put(tokensFromLine[1], food);

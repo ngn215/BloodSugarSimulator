@@ -1,6 +1,8 @@
 package Concrete;
 
-public class Exercise {
+import Interface.BPEffector;
+
+public class Exercise implements BPEffector{
 
 	private int id;
 	private String name;
@@ -36,5 +38,16 @@ public class Exercise {
 		
 		//return person instance
 		return new Exercise(idInteger, name, exerciseIndexInteger);
+	}
+
+	@Override
+	public int getEffectIndex() {
+		// TODO Auto-generated method stub
+		return exerciseIndex;
+	}
+	
+	public String toString()
+	{
+		return getName();
 	}
 }

@@ -54,6 +54,9 @@ public class ExerciseFactory {
 				String lineFromFile = scanner.nextLine();
 				String[] tokensFromLine = lineFromFile.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 				
+				if (tokensFromLine.length < 3)
+					throw new RuntimeException("Invalid exercise list file.");
+				
 				Exercise exercise = createExerciseInstance(tokensFromLine[0], tokensFromLine[1], tokensFromLine[2]);
 				
 				exercisesMap.put(tokensFromLine[1], exercise);
