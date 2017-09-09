@@ -1,4 +1,6 @@
+import Concrete.BPGraphBuilder;
 import Concrete.BPLogProcessor;
+import Factory.BPRangeRecordFactory;
 import Factory.ExerciseFactory;
 import Factory.FoodFactory;
 
@@ -13,8 +15,14 @@ public class Main {
 			FoodFactory.initializeFactory();
 			ExerciseFactory.initializeFactory();
 			
-			BPLogProcessor processor = new BPLogProcessor("InputFiles/UserLog.txt");
+			BPRangeRecordFactory bpRangeRecordFactory = new BPRangeRecordFactory();
+			
+			BPLogProcessor processor = new BPLogProcessor("InputFiles/UserLog.txt", bpRangeRecordFactory);
 			processor.processUserLog();
+			
+			BPGraphBuilder graphBuilder = new BPGraphBuilder(bpRangeRecordFactory);
+			graphBuilder.buildBPGraph();
+			graphBuilder.buildGlycationGraph();
 		}
 		catch(Exception e)
 		{
