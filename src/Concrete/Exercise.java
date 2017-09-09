@@ -43,7 +43,7 @@ public class Exercise implements BPEffector{
 	@Override
 	public int getEffectIndex() {
 		// TODO Auto-generated method stub
-		return exerciseIndex;
+		return exerciseIndex * -1;
 	}
 	
 	public String toString()
