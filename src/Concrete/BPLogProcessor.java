@@ -22,13 +22,19 @@ import Interface.BPEffector;
 public class BPLogProcessor {
 
 	private final String userlogPath;
-	private final List<UserLogRecord> recordsFromLog = new ArrayList<UserLogRecord>();
-	PriorityQueue<LocalDateTime> pq = new PriorityQueue<LocalDateTime>();
-	HashMap<LocalDateTime, List<BPEffector>> map = new HashMap<LocalDateTime, List<BPEffector>>();
+	private final List<UserLogRecord> recordsFromLog;
+	PriorityQueue<LocalDateTime> pq;
+	HashMap<LocalDateTime, List<BPEffector>> map;
+	BPRangeRecordFactory bpRangeRecordFactory;
 	
-	public BPLogProcessor(String userlogPath)
+	public BPLogProcessor(String userlogPath, BPRangeRecordFactory bpRangeRecordFactory)
 	{
+		this.recordsFromLog = new ArrayList<UserLogRecord>();
+		this.pq = new PriorityQueue<LocalDateTime>();
+		this.map = new HashMap<LocalDateTime, List<BPEffector>>();
+		
 		this.userlogPath = userlogPath;
+		this.bpRangeRecordFactory = bpRangeRecordFactory;
 	}
 	
 	public void processUserLog()
@@ -50,22 +56,23 @@ public class BPLogProcessor {
 			path = Paths.get(userlogPath);
 			scanner = new Scanner(path);
 			
-			//scanner.nextLine(); //skipping headers
-			
 			while (scanner.hasNextLine())
 		    {
 				String lineFromFile = scanner.nextLine();
-				String[] tokensFromLine = lineFromFile.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-				
-				String type = tokensFromLine[0];
-				String name = tokensFromLine[1];
-				String timeStamp = tokensFromLine[2];
-				
-				UserLogRecord record = UserLogRecordFactory.createInstance(type, name, timeStamp);
-				recordsFromLog.add(record);
-				
-				if (tokensFromLine.length < 3)
-					throw new RuntimeException("Invalid entry in user log file.");
+				if (!lineFromFile.equals(""))
+				{
+					String[] tokensFromLine = lineFromFile.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+					
+					if (tokensFromLine.length < 3)
+						throw new RuntimeException("Invalid entry in user log file.");
+					
+					String type = tokensFromLine[0];
+					String name = tokensFromLine[1];
+					String timeStamp = tokensFromLine[2];
+					
+					UserLogRecord record = UserLogRecordFactory.createInstance(type, name, timeStamp);
+					recordsFromLog.add(record);
+				}
 		    }      
 		}
 		catch(IOException e)
@@ -104,7 +111,6 @@ public class BPLogProcessor {
 				endTime = startTime.plusHours(1);
 			}
 			
-			
 			//if this is not last record
 			if (i < recordsFromLog.size()-1)
 			{
@@ -112,112 +118,49 @@ public class BPLogProcessor {
 				UserLogRecord nextRecord = recordsFromLog.get(i+1);
 				LocalDateTime startTimeNextRecord = nextRecord.getTimeStamp();
 				
-				//CASE : NO OVERLAP ------------------------------------------------
-				//if current record's end time ends before start time of next record.
-				if (endTime.isBefore(startTimeNextRecord))
-				{				
-					if (pq.isEmpty())
-					{
-						List<BPEffector> singleItemList = new ArrayList<BPEffector>();
-						singleItemList.add(bpEffector);
-						BPRangeRecordFactory.createInstance(startTime, endTime, singleItemList);
-					}
-					else
-					{	
-						addToPriorityQueueAndMap(endTime, bpEffector);
+				addToPriorityQueueAndMap(endTime, bpEffector);
 				
-						LocalDateTime currentStartTime = startTime;
-						//add all items smaller than endtime from pq to range
-						while(!pq.isEmpty() && pq.peek().isBefore(endTime))
-						{							
-							LocalDateTime pqEndTime = pq.peek();
-							BPRangeRecordFactory.createInstance(currentStartTime, pqEndTime, getAllItemsFromMap());
-							
-							removeTopElementFromPQAndMap();
-							currentStartTime = pqEndTime.plusMinutes(1);
-						}
-						
-						BPRangeRecordFactory.createInstance(currentStartTime, endTime, getAllItemsFromMap());
-						removeTopElementFromPQAndMap();
-					}
+				LocalDateTime currentStartTime = startTime;
+				
+				//add all items smaller than endtime from pq to range
+				while(!pq.isEmpty() && pq.peek().isBefore(endTime) && pq.peek().isBefore(startTimeNextRecord))
+				{							
+					LocalDateTime pqEndTime = pq.peek();
+					bpRangeRecordFactory.createInstance(currentStartTime, pqEndTime, getAllItemsFromMap());
+					
+					removeTopElementFromPQAndMap();
+					currentStartTime = pqEndTime.plusMinutes(1);
 				}
-				//END of CASE : NO OVERLAP ----------------------------------------
 				
-				//CASE : OVERLAP ------------------------------------------------
-				//if current record's end time goes beyond start time of next record
-				else if (endTime.isAfter(startTimeNextRecord))
-				{					
-					if (pq.isEmpty())
-					{						
-						addToPriorityQueueAndMap(endTime, bpEffector);
-						BPRangeRecordFactory.createInstance(startTime, startTimeNextRecord.minusMinutes(1), getAllItemsFromMap());
-					}
-					else
-					{
-						addToPriorityQueueAndMap(endTime, bpEffector);
-						
-						if (pq.peek().isAfter(startTimeNextRecord))
-						{						
-							BPRangeRecordFactory.createInstance(startTime, startTimeNextRecord.minusMinutes(1), getAllItemsFromMap());
-						}
-						else
-						{
-							LocalDateTime calculatedStartTime = startTime;
-							while(!pq.isEmpty() && pq.peek().isBefore(startTimeNextRecord))
-							{
-								LocalDateTime pqEndTime = pq.peek();
-								BPRangeRecordFactory.createInstance(calculatedStartTime, pqEndTime, getAllItemsFromMap());
-								
-								calculatedStartTime = pqEndTime.plusMinutes(1);
-								removeTopElementFromPQAndMap();
-							}
-							
-							if (calculatedStartTime.isBefore(startTimeNextRecord))
-							{
-								BPRangeRecordFactory.createInstance(calculatedStartTime, startTimeNextRecord.minusMinutes(1), getAllItemsFromMap());
-							}
-						}
-					}
+				//NO OVERLAP
+				if (endTime.isBefore(startTimeNextRecord) && currentStartTime.isBefore(endTime))
+				{
+					bpRangeRecordFactory.createInstance(currentStartTime, endTime, getAllItemsFromMap());
+					removeTopElementFromPQAndMap(); //remove end time from PQ
 				}
-				//END of CASE : OVERLAP ----------------------------------------
-				
-				//CASE : EQUAL ------------------------------------------------
-				//if current record's end time is equal to start time of next record
-				else if (endTime.isEqual(startTimeNextRecord))
-				{	
-					if (pq.isEmpty())
-					{
-						addToPriorityQueueAndMap(endTime, bpEffector);
-						BPRangeRecordFactory.createInstance(startTime, endTime.minusMinutes(1), getAllItemsFromMap());
-					}	
-					else
-					{	
-						addToPriorityQueueAndMap(endTime, bpEffector);
-						LocalDateTime calculatedStartTime = startTime;
-						while(!pq.isEmpty() && pq.peek().isBefore(startTimeNextRecord))
-						{
-							LocalDateTime pqEndTime = pq.peek();
-							BPRangeRecordFactory.createInstance(calculatedStartTime, pqEndTime, getAllItemsFromMap());
-							
-							calculatedStartTime = pqEndTime.plusMinutes(1);
-							removeTopElementFromPQAndMap();
-						}
-					}
+				//OVERLAP
+				else if(endTime.isAfter(startTimeNextRecord) && currentStartTime.isBefore(startTimeNextRecord))
+				{
+					bpRangeRecordFactory.createInstance(currentStartTime, startTimeNextRecord.minusMinutes(1), getAllItemsFromMap());
 				}
-				//END of CASE : EQUAL ----------------------------------------
-				
+				//EQUAL
+				else
+				{
+					bpRangeRecordFactory.createInstance(currentStartTime, startTimeNextRecord.minusMinutes(1), getAllItemsFromMap());
+				}
 			}
 			else
 			{
+				//this is last record
+				
 				addToPriorityQueueAndMap(endTime, bpEffector);
 				
-				//this is last record
 				LocalDateTime currentStartTime = startTime;
 				
 				while(!pq.isEmpty())
 				{
 					LocalDateTime pqEndTime = pq.peek();
-					BPRangeRecordFactory.createInstance(currentStartTime, pqEndTime, getAllItemsFromMap());
+					bpRangeRecordFactory.createInstance(currentStartTime, pqEndTime, getAllItemsFromMap());
 					
 					removeTopElementFromPQAndMap();
 					currentStartTime = pqEndTime.plusMinutes(1);
@@ -227,15 +170,10 @@ public class BPLogProcessor {
 				if (currentStartTime.isBefore(endTime) || currentStartTime.isEqual(endTime))
 				{
 					addToPriorityQueueAndMap(endTime, bpEffector);
-					BPRangeRecordFactory.createInstance(currentStartTime, endTime, getAllItemsFromMap());
+					bpRangeRecordFactory.createInstance(currentStartTime, endTime, getAllItemsFromMap());
 				}
 			}
 		}
-		
-		/*for(UserLogRecord record : recordsFromLog)
-		{			
-			System.out.println(record.getName());
-		}*/
 	}
 	
 	private void addToPriorityQueueAndMap(LocalDateTime endTime, BPEffector bpEffector)
