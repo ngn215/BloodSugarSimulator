@@ -7,17 +7,16 @@ import java.time.format.DateTimeParseException;
 import Concrete.UserLogRecord;
 
 public class UserLogRecordFactory {
-	
-	private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
-	
+		
 	private UserLogRecordFactory()
 	{
-		//do nothing
+		
 	}
 	
 	public static UserLogRecord createInstance(String type, String name, String timeStamp)
 	{						
 		LocalDateTime timeStampDateTime = null;
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
 		
 		try
 		{
