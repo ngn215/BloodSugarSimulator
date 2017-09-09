@@ -8,9 +8,9 @@ import Interface.BPEffector;
 
 public class BPRangeRecord {
 
-	LocalDateTime start;
-	LocalDateTime end;
-	List<BPEffector> effectorList;
+	private LocalDateTime start;
+	private LocalDateTime end;
+	private List<BPEffector> effectorList;
 	
 	private BPRangeRecord(LocalDateTime start, LocalDateTime end, List<BPEffector> effectorList)
 	{
@@ -22,6 +22,18 @@ public class BPRangeRecord {
 		System.out.println(start.format(formatter) + ", " + end.format(formatter) + ", " + effectorList.toString());
 	}
 	
+	public List<BPEffector> getEffectorList() {
+		return effectorList;
+	}
+	
+	public LocalDateTime getStart() {
+		return start;
+	}
+
+	public LocalDateTime getEnd() {
+		return end;
+	}
+
 	public static BPRangeRecord getInstance(LocalDateTime start, LocalDateTime end, List<BPEffector> effectorList)
 	{
 		//validation

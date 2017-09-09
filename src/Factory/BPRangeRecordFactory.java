@@ -11,18 +11,22 @@ import Interface.BPEffector;
 
 public class BPRangeRecordFactory {
 
-	private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
-	private final static List<BPRangeRecord> bpRangeRecordList = new ArrayList<BPRangeRecord>();
+	private final List<BPRangeRecord> bpRangeRecordList;
 	
-	private BPRangeRecordFactory()
+	public BPRangeRecordFactory()
 	{
-		//do nothing
+		this.bpRangeRecordList = new ArrayList<BPRangeRecord>();
 	}
 	
-	public static BPRangeRecord createInstance(String start, String end, List<BPEffector> effectorList)
+	public List<BPRangeRecord> getBprangerecordlist() {
+		return bpRangeRecordList;
+	}
+
+	public BPRangeRecord createInstance(String start, String end, List<BPEffector> effectorList)
 	{						
 		LocalDateTime startDateTime = null;
 		LocalDateTime endDateTime = null;
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
 		
 		try
 		{
@@ -53,7 +57,7 @@ public class BPRangeRecordFactory {
 		return bpRangeRecord;
 	}
 	
-	public static BPRangeRecord createInstance(LocalDateTime start, LocalDateTime end, List<BPEffector> effectorList)
+	public BPRangeRecord createInstance(LocalDateTime start, LocalDateTime end, List<BPEffector> effectorList)
 	{						
 		if (effectorList == null || effectorList.isEmpty())
 			throw new IllegalArgumentException("effectorList cannot be null or empty");
