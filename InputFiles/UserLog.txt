@@ -4,7 +4,11 @@ Food,Corn tortilla,03-01-2017 02:30:00
 Food,"Banana cake, made with sugar",03-01-2017 05:30:00
 Food,"Apple, made with sugar",03-01-2017 07:30:00
 Exercise,Crunches,03-01-2017 07:45:00
-Food,Kaiser roll,03-01-2017 08:00:00
+Food,"Baked russet potato, average",03-01-2017 08:00:00
+Food,Kaiser roll,03-01-2017 08:05:00
+Food,"Instant mashed potato, average",03-01-2017 08:07:00
 Food,White wheat flour bread,03-01-2017 10:00:00
 Food,Wheat tortilla,03-01-2017 10:15:00
 Exercise,Running,03-02-2017 00:00:00
+
+Exercise,Running,03-02-2017 04:00:00
